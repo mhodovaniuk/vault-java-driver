@@ -3,6 +3,7 @@ package io.github.jopenlibs.vault.api;
 import io.github.jopenlibs.vault.Vault;
 import io.github.jopenlibs.vault.VaultException;
 import io.github.jopenlibs.vault.api.pki.CredentialFormat;
+import io.github.jopenlibs.vault.api.pki.PrivateKeyFormat;
 import io.github.jopenlibs.vault.api.pki.RoleOptions;
 import io.github.jopenlibs.vault.response.PkiResponse;
 import io.github.jopenlibs.vault.rest.RestResponse;
@@ -102,7 +103,35 @@ public class AuthBackendPkiTests {
 
         // Issue cert
         final PkiResponse issueResponse = vault.pki()
-                .issue("testRole", "test.myvault.com", null, null, "1h", CredentialFormat.PEM);
+                .issue("testRole", "test.myvault.com", null, null, "1h", CredentialFormat.PEM, null);
+        TestCase.assertNotNull(issueResponse.getCredential().getCertificate());
+        TestCase.assertNotNull(issueResponse.getCredential().getPrivateKey());
+        TestCase.assertNotNull(issueResponse.getCredential().getSerialNumber());
+        TestCase.assertEquals("rsa", issueResponse.getCredential().getPrivateKeyType());
+        TestCase.assertNotNull(issueResponse.getCredential().getIssuingCa());
+    }
+
+    @Test
+    public void testIssueCredentialWithPksc8PrivateKey() throws VaultException, InterruptedException {
+        final Vault vault = container.getRootVault();
+
+        // Create a role
+        final PkiResponse createRoleResponse = vault.pki().createOrUpdateRole("testRole",
+                new RoleOptions()
+                        .allowedDomains(new ArrayList<>() {{
+                            add("myvault.com");
+                        }})
+                        .allowSubdomains(true)
+                        .maxTtl("9h")
+        );
+        int statusCode = VaultVersion.lessThan("1.13.0") ? 204 : 200;
+        int responseCode = createRoleResponse.getRestResponse().getStatus();
+        TestCase.assertEquals(statusCode, responseCode);
+        Thread.sleep(3000);
+
+        // Issue cert
+        final PkiResponse issueResponse = vault.pki()
+                .issue("testRole", "test.myvault.com", null, null, "1h", CredentialFormat.PEM, PrivateKeyFormat.PKCS8);
         TestCase.assertNotNull(issueResponse.getCredential().getCertificate());
         TestCase.assertNotNull(issueResponse.getCredential().getPrivateKey());
         TestCase.assertNotNull(issueResponse.getCredential().getSerialNumber());
@@ -143,7 +172,7 @@ public class AuthBackendPkiTests {
 
         // Issue cert
         final PkiResponse issueResponse = vault.pki()
-                .issue("testRole", "test.myvault.com", null, null, "1h", CredentialFormat.PEM, csr);
+                .issue("testRole", "test.myvault.com", null, null, "1h", CredentialFormat.PEM, null, csr);
         TestCase.assertNotNull(issueResponse.getCredential().getCertificate());
         TestCase.assertNotNull(issueResponse.getCredential().getCaChain());
         TestCase.assertNull(issueResponse.getCredential().getPrivateKey());
@@ -170,7 +199,7 @@ public class AuthBackendPkiTests {
         Thread.sleep(3000);
         // Issue cert
         final PkiResponse issueResponse = vault.pki()
-                .issue("testRole", "test.myvault.com", null, null, "1h", CredentialFormat.PEM);
+                .issue("testRole", "test.myvault.com", null, null, "1h", CredentialFormat.PEM, null);
         TestCase.assertNotNull(issueResponse.getCredential().getSerialNumber());
         vault.pki().revoke(issueResponse.getCredential().getSerialNumber());
     }

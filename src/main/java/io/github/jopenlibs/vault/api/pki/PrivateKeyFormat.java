@@ -3,18 +3,17 @@ package io.github.jopenlibs.vault.api.pki;
 import java.util.List;
 
 /**
- * <p>Possible format options for credentials issued by the PKI backend.</p>
+ * <p>Possible format options for private key issued by the PKI backend.</p>
  *
  * <p>See: {@link Pki#issue(String, String, List, List, String, CredentialFormat, PrivateKeyFormat)}</p>
  */
-public enum CredentialFormat {
-    PEM,
+public enum PrivateKeyFormat {
     DER,
-    PEM_BUNDLE;
+    PKCS8;
 
-    public static CredentialFormat fromString(final String text) {
+    public static PrivateKeyFormat fromString(final String text) {
         if (text != null) {
-            for (final CredentialFormat format : CredentialFormat.values()) {
+            for (final PrivateKeyFormat format : PrivateKeyFormat.values()) {
                 if (text.equalsIgnoreCase(format.toString())) {
                     return format;
                 }

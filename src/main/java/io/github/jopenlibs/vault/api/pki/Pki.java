@@ -317,6 +317,7 @@ public class Pki extends OperationsBase {
      * @param format (optional) Format for returned data. Can be pem, der, or pem_bundle; defaults
      * to pem. If der, the output is base64 encoded. If pem_bundle, the certificate field will
      * contain the private key, certificate, and issuing CA, concatenated.
+     * @param privateKeyFormat (optional) private key format
      * @return A container for the information returned by Vault
      * @throws VaultException If any error occurs or unexpected response is received from Vault
      */
@@ -326,9 +327,10 @@ public class Pki extends OperationsBase {
             final List<String> altNames,
             final List<String> ipSans,
             final String ttl,
-            final CredentialFormat format) throws VaultException {
+            final CredentialFormat format,
+            final PrivateKeyFormat privateKeyFormat) throws VaultException {
 
-        return issue(roleName, commonName, altNames, ipSans, ttl, format, "");
+        return issue(roleName, commonName, altNames, ipSans, ttl, format, privateKeyFormat, "");
     }
 
     /**
@@ -367,6 +369,7 @@ public class Pki extends OperationsBase {
      * @param format (optional) Format for returned data. Can be pem, der, or pem_bundle; defaults
      * to pem. If der, the output is base64 encoded. If pem_bundle, the certificate field will
      * contain the private key, certificate, and issuing CA, concatenated.
+     * @param privateKeyFormat (optional) private key format
      * @param csr (optional) PEM Encoded CSR
      * @return A container for the information returned by Vault
      * @throws VaultException If any error occurs or unexpected response is received from Vault
@@ -378,6 +381,7 @@ public class Pki extends OperationsBase {
             final List<String> ipSans,
             final String ttl,
             final CredentialFormat format,
+            final PrivateKeyFormat privateKeyFormat,
             final String csr
     ) throws VaultException {
         return retry(attempt -> {
@@ -416,6 +420,10 @@ public class Pki extends OperationsBase {
 
             if (format != null) {
                 jsonObject.add("format", format.toString());
+            }
+
+            if (privateKeyFormat != null) {
+                jsonObject.add("private_key_format", privateKeyFormat.toString());
             }
 
             if (csr != null) {
